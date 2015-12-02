@@ -1,0 +1,162 @@
+---
+title: "Analysis of BH3 peptide experiments"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+if (!require("gplots")) {
+   install.packages("gplots", dependencies = TRUE)
+   library(gplots)
+   }
+if (!require("RColorBrewer")) {
+   install.packages("RColorBrewer", dependencies = TRUE)
+   library(RColorBrewer)
+   }
+setwd("~/Dropbox/BH3/Final/")
+#a1<-read.table("Batch1/BH3_alive_cells.txt", header=1,row.names = 1,sep='\t')
+#a2<-read.table("Batch2/BH3_alive_cells.txt", header=1,row.names = 1,sep='\t')
+#a3<-read.table("Batch3/BH3_alive_cells.txt", header=1,row.names = 1,sep='\t')
+
+
+
+
+b1<-read.table("Batch1/alternative_normalized_BH3_CytoC_batch1.txt", header=1,row.names = 1,sep='\t')
+b2<-read.table("Batch2/alternative_normalized_BH3_CytoC_batch2.txt", header=1,row.names = 1,sep='\t')
+b3<-read.table("Batch3/alternative_normalized_BH3_CytoC_batch3.txt", header=1,row.names = 1,sep='\t')
+colnames(b1)<-paste(colnames(b1),"B1", sep="_")
+colnames(b2)<-paste(colnames(b2),"B2", sep="_")
+colnames(b3)<-paste(colnames(b3),"B3", sep="_")
+alt_normalized_cyto_c_release<-cbind(b1,b2,b3)
+
+bad=bim=noxa=controls=NULL
+
+#seperating response by peptide
+for(i in 1:ncol(alt_normalized_cyto_c_release)){
+  tmp_col=alt_normalized_cyto_c_release[,i]
+  #colnames(tmp_col)=colnames(mean_normalized)[i]
+  #print(names(tmp_col))
+  #names(tmp_col)=colnames(mean_normalized)[i]
+  if(strsplit(colnames(alt_normalized_cyto_c_release)[i],split = "_")[[1]][1]=="BAD"){
+    bad=cbind(bad,tmp_col)
+    colnames(bad)[ncol(bad)]=strsplit(colnames(alt_normalized_cyto_c_release)[i],split = "_")[[1]][3]
+    print(colnames(bad))
+    #colnames(bad)[-1]=colnames(mean_normalized)[i]
+    #print(colnames(bad)[-1])
+  }
+  else if(strsplit(colnames(alt_normalized_cyto_c_release)[i],split = "_")[[1]][1]=="BIM"){
+    bim=cbind(bim,tmp_col)
+    colnames(bim)[ncol(bim)]=strsplit(colnames(alt_normalized_cyto_c_release)[i],split = "_")[[1]][3]
+  }
+  else if(strsplit(colnames(alt_normalized_cyto_c_release)[i],split = "_")[[1]][1]=="NOXA"){
+    noxa=cbind(noxa,tmp_col)
+    colnames(noxa)[ncol(noxa)]=strsplit(colnames(alt_normalized_cyto_c_release)[i],split = "_")[[1]][3]
+  }
+  else{
+    controls=cbind(controls,tmp_col)
+    colnames(controls)[ncol(controls)]=strsplit(colnames(alt_normalized_cyto_c_release)[i],split = "_")[[1]][3]
+  }
+  tmp_col=NULL
+}
+rownames(bad)=rownames(bim)=rownames(noxa)=rownames(alt_normalized_cyto_c_release)
+cell_lines_subtypes<-read.table("~/Dropbox/BH3/cellLine_subtypes.txt", row.names = 1, header = 1,sep='\t')
+subtype_pred_bad_response<-merge_drop(cell_lines_subtypes,t(bad))
+subtype_pred_bim_response<-merge_drop(cell_lines_subtypes,t(bim))
+subtype_pred_noxa_response<-merge_drop(cell_lines_subtypes,t(noxa))
+#####Creating PDFs
+pdf("~/Dropbox/BH3/Final/Graphs_0929.pdf")
+
+####BAD-based
+heatmap.2(as.matrix(subtype_pred_bad_response[,22:33]), RowSideColors = c(rep("gray", sum(subtype_pred_bad_response$Transcriptional.subtype...ERBB2.status=="Basal")),rep("blue", sum(subtype_pred_bad_response$Transcriptional.subtype...ERBB2.status=="ERBB2-amp")),rep("brown", sum(subtype_pred_bad_response$Transcriptional.subtype...ERBB2.status=="Claudin-low")),rep("black", sum(subtype_pred_bad_response$Transcriptional.subtype...ERBB2.status=="Luminal"))),col=bluered,density.info = 'none',trace="none",margins=c(6.5,6.5),main="BAD (via BCL anti-apoptotic proteins) \n activity within subtypes\n(not scaled)")#,scale='col')#,Rowv=F,Colv=F)
+par(lend = 1)           # square line ends for the color legend
+legend("topright",legend = c("Basal", "ERBB2-amp", "Claudin-low","Luminal"), col = c("gray", "blue","brown","black"),  lty= 1,lwd = 10,cex = 0.55)
+
+####BIM-based
+heatmap.2(as.matrix(subtype_pred_bim_response[,22:33]), RowSideColors = c(rep("gray", sum(subtype_pred_bim_response$Transcriptional.subtype...ERBB2.status=="Basal")),rep("blue", sum(subtype_pred_bim_response$Transcriptional.subtype...ERBB2.status=="ERBB2-amp")),rep("brown", sum(subtype_pred_bim_response$Transcriptional.subtype...ERBB2.status=="Claudin-low")),rep("black", sum(subtype_pred_bim_response$Transcriptional.subtype...ERBB2.status=="Luminal"))),col=bluered,density.info = 'none',trace="none",margins=c(6.5,6.5),main="BIM(via all BH3 anti-apoptotic proteins) \n activity within subtypes\n(not scaled)")#,scale='row')#,Rowv=F,Colv=F)
+par(lend = 1)           # square line ends for the color legend
+legend("topright",legend = c("Basal", "ERBB2-amp", "Claudin-low","Luminal"), col = c("gray", "blue","brown","black"),  lty= 1,lwd = 10,cex = 0.55)
+
+####NOXA-based
+heatmap.2(as.matrix(subtype_pred_noxa_response[,22:33]), RowSideColors = c(rep("gray", sum(subtype_pred_noxa_response$Transcriptional.subtype...ERBB2.status=="Basal")),rep("blue", sum(subtype_pred_noxa_response$Transcriptional.subtype...ERBB2.status=="ERBB2-amp")),rep("brown", sum(subtype_pred_noxa_response$Transcriptional.subtype...ERBB2.status=="Claudin-low")),rep("black", sum(subtype_pred_noxa_response$Transcriptional.subtype...ERBB2.status=="Luminal"))),col=bluered,density.info = 'none',trace="none",margins=c(6.5,6.5),main="NOXA(via MCL1) activity \n within breast cancer subtypes\n(not scaled)")#,scale='row')#,Rowv=F,Colv=F)
+par(lend = 1)           # square line ends for the color legend
+legend("topright",legend = c("Basal", "ERBB2-amp", "Claudin-low","Luminal"), col = c("gray", "blue","brown","black"),  lty= 1,lwd = 10,cex = 0.55)
+
+#write.table(subtype_pred_response,"~/Dropbox/BH3/Final/subtype_preds_response_0926.txt",sep='\t',col.names = NA,quote = F)
+
+
+heatmap.2(as.matrix(rbind(t(bim),t(bad),t(noxa))), RowSideColors = c(rep("gray", ncol(bim)),rep("blue", ncol(bad)),rep("brown", ncol(noxa))),col=bluered,density.info = 'none',trace="none",margins=c(6.5,6.5),main="BH3 activity \n within breast cancer subtypes\n(not scaled)")#,scale='row')#,Rowv=F,Colv=F)
+par(lend = 1)           # square line ends for the color legend
+legend("topright",legend = c("BIM", "BAD", "NOXA"), col = c("gray", "blue","brown"),  lty= 1,lwd = 10,cex = 0.55)
+response_subtypes<-read.table("Alt_Normalized_All_Batches.txt", header=1,row.names = 1,sep='\t')
+response_subtypes<-response_subtypes[order(response_subtypes$Subtypes),]
+heatmap.2(as.matrix(response_subtypes[,2:13]), RowSideColors = c(rep("gray", sum(response_subtypes$Subtypes=="basal")),rep("blue", sum(response_subtypes$Subtypes=="basal/HER2 positive")),rep("brown", sum(response_subtypes$Subtypes=="claudin-low")),rep("black", sum(response_subtypes$Subtypes=="luminal")),rep("green",sum(response_subtypes$Subtypes=="luminal/HER2 positive"))),col=bluered,density.info = 'none',trace="none",margins=c(6.5,6.5),main="BH3-drug activity \n within  subtypes\n(not scaled)")#,scale='row')#,Rowv=F,Colv=F)
+par(lend = 1)           # square line ends for the color legend
+legend("topright",legend = c("Basal", "HER2-Basal","Claudin-low","Luminal","HER2-Luminal"), col = c("gray", "blue","brown" ,"black","green"),  lty= 1,lwd = 10,cex = 0.55)
+
+
+heatmap.2(as.matrix(bad),col = bluered,density.info = "none",trace="none",margins = c(10,8),main="Response with \nBAD 10 uM")
+heatmap.2(as.matrix(bim),col = bluered,density.info = "none",trace="none",margins = c(10,8),main="Response with \nBIM 0.1 uM")
+heatmap.2(as.matrix(noxa),col = bluered,density.info = "none",trace="none",margins = c(10,8),main="Response with\nNOXA 100 uM")
+tmp_drug=(cor(t(bad),method="spearman"))
+tmp_drug[c(1,4,5,8:12),c(1,4,5,8:12)]
+heatmap.2(tmp_drug[c(1,4,5,8:12),c(1,4,5,8:12)],col = bluered,density.info = "none",trace="none",margins = c(10,8),main="Drug correlations \nin BAD 10 uM")
+tmp_drug=(cor(t(bim),method="spearman"))
+tmp_drug[c(1,4,5,8:12),c(1,4,5,8:12)]
+heatmap.2(tmp_drug[c(1,4,5,8:12),c(1,4,5,8:12)],col = bluered,density.info = "none",trace="none",margins = c(10,8),main="Drug correlations \nin BIM 0.1 uM")
+tmp_drug=(cor(t(noxa),method="spearman"))
+tmp_drug[c(1,4,5,8:12),c(1,4,5,8:12)]
+heatmap.2(tmp_drug[c(1,4,5,8:12),c(1,4,5,8:12)],col = bluered,density.info = "none",trace="none",margins = c(10,8),main="Drug correlations \nin NOXA 100 uM")
+
+
+
+subtype_bad<-merge_drop(cell_lines_subtypes,t(bad))
+for(i in (ncol(cell_lines_subtypes)+1):ncol(subtype_bad)){
+  boxplot2(subtype_bad[,i]~subtype_bad[,5],main=paste("Response across subtypes:\n BAD 10 uM with",colnames(subtype_bad)[i],sep=" "))
+}
+subtype_bim<-merge_drop(cell_lines_subtypes,t(bim))
+for(i in (ncol(cell_lines_subtypes)+1):ncol(subtype_bim)){
+  boxplot2(subtype_bim[,i]~subtype_bim[,5],main=paste("Response across subtypes:\n BIM 0.1 uM with",colnames(subtype_bim)[i],sep=" "))
+}
+subtype_noxa<-merge_drop(cell_lines_subtypes,t(noxa))
+for(i in (ncol(cell_lines_subtypes)+1):ncol(subtype_noxa)){
+  boxplot2(subtype_noxa[,i]~subtype_noxa[,5],main=paste("Response across subtypes:\n NOXA 100 uM with",colnames(subtype_noxa)[i],sep=" "))
+}
+ barplot.default(noxa[11:12,],horiz = F,cex.names = 0.3,beside = T,col=c("darkblue","lightblue"),legend=c("DMSO+NOXA","DMSO Neg peptide"),main = "NOXA only response")
+ barplot.default(bim[11:12,],horiz = F,cex.names = 0.3,beside = T,col=c("darkblue","lightblue"),legend=c("DMSO+BIM","DMSO Neg peptide"),main = "BIM only response")
+  barplot.default(bad[11:12,],horiz = F,cex.names = 0.3,beside = T,col=c("darkblue","lightblue"),legend=c("DMSO+BAD","DMSO Neg peptide"),main = "BAD only response")
+  #barplot.default(t(alt_normalized_cyto_c_release[1,]),horiz = F,cex.names = 0.5)#,beside = T,col=c("darkblue","lightblue"))#,legend=rownames(alt_normalized_cyto_c_release)[1],main = "BAD only response")
+ barplot((bad),cex.names = 0.45,horiz = F,beside = T,col = c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","aquamarine","darkolivegreen","darkcyan","coral"),cex.axis = 0.5,xlab = "Cell lines",ylab = "Response",main="BAD peptide and drug combo respone\nacross cell lines")
+ legend("topright",legend=rownames(bad),col=c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","aquamarine","darkolivegreen","darkcyan","coral"),lty = 1,lwd=10,cex = 0.6)
+ 
+ barplot((bim),cex.names = 0.45,horiz = F,beside = T,col = c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","aquamarine","darkolivegreen","darkcyan","coral"),cex.axis = 0.5,xlab = "Cell lines",ylab = "Response",main="BIM peptide and drug combo respone\nacross cell lines")
+ legend("topright",legend=rownames(bim),col=c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","aquamarine","darkolivegreen","darkcyan","coral"),lty = 1,lwd=10,cex = 0.6)
+ barplot((noxa),cex.names = 0.45,horiz = F,beside = T,col = c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","aquamarine","darkolivegreen","darkcyan","coral"),cex.axis = 0.5,xlab = "Cell lines",ylab = "Response",main="NOXA peptide and drug combo respone\nacross cell lines")
+ legend("topright",legend=rownames(noxa),col=c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","aquamarine","darkolivegreen","darkcyan","coral"),lty = 1,lwd=10,cex = 0.6)
+par(mfrow=c(1,3))
+for(i in 1:ncol(bad)){ 
+  barplot((bad)[1:12,i],cex.names = 0.5,horiz = F,beside = T,col = c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","bisque","darkorchid","cyan","coral"),cex.axis = 0.5,main=paste("BAD in ",colnames(bad)[i],sep=" "),ylim = c(0,1))
+# legend("topleft",legend=rownames(bad),col=c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","bisque","darkorchid","cyan","coral"),lty = 1,lwd=10,cex = 0.45)
+ barplot((bim)[1:12,i],cex.names = 0.5,horiz = F,beside = T,col = c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","bisque","darkorchid","cyan","coral"),cex.axis = 0.5,main=paste("BIM in ",colnames(bim)[i],sep=" "),ylim = c(0,1))
+ legend("topleft",legend=rownames(bim),col=c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","bisque","darkorchid","cyan","coral"),lty = 1,lwd=10,cex = 0.45)
+ barplot((noxa)[1:12,i],cex.names = 0.5,horiz = F,beside = T,col = c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","bisque","darkorchid","cyan","coral"),cex.axis = 0.5,main=paste("NOXA in ",colnames(bad)[i],sep=" "),ylim = c(0,1))
+# legend("topleft",legend=rownames(noxa),col=c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","bisque","darkorchid","cyan","coral"),lty = 1,lwd=10,cex = 0.45)
+}
+
+for(i in 1:nrow(bad)){ 
+  barplot(t(bad)[1:15,i],cex.names = 0.5,horiz = F,beside = T,col = c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","bisque","darkorchid","cyan","coral","hotpink","rosybrown","plum"),cex.axis = 0.5,main=paste("BAD with ",rownames(bad)[i],sep=" "),ylim = c(0,1))
+# legend("topleft",legend=colnames(bad),col=c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","bisque","darkorchid","cyan","coral","hotpink","rosybrown","plum"),lty = 1,lwd=10,cex = 0.45)
+ barplot(t(bim)[1:15,i],cex.names = 0.5,horiz = F,beside = T,col = c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","bisque","darkorchid","cyan","coral","hotpink","rosybrown","plum"),cex.axis = 0.5,main=paste("BIM with ",rownames(bim)[i],sep=" "),ylim = c(0,1))
+ legend("topleft",legend=colnames(bim),col=c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","bisque","darkorchid","cyan","coral","hotpink","rosybrown","plum"),lty = 1,lwd=10,cex = 0.45)
+ barplot(t(noxa)[1:15,i],cex.names = 0.5,horiz = F,beside = T,col = c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","bisque","darkorchid","cyan","coral","hotpink","rosybrown","plum"),cex.axis = 0.5,main=paste("NOXA in ",rownames(bad)[i],sep=" "),ylim = c(0,1))
+# legend("topleft",legend=colnames(noxa),col=c("cadetblue", "blue","brown" ,"green","red","darkblue","darkgreen","orange","bisque","darkorchid","cyan","coral","hotpink","rosybrown","plum"),lty = 1,lwd=10,cex = 0.45)
+}
+
+
+ dev.off()
+
+
+```
+

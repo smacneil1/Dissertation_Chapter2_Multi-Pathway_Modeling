@@ -1,0 +1,167 @@
+---
+title: "BH3_DrugScreen_Correlation"
+output: html_document
+---
+
+Correlating BH3 Results with Results from the Drug Screen 
+
+#First parse the data
+```{r}
+setwd("~/Dropbox/BH3/Code")
+# source("BH3_graphs_NewGates_2.Rmd") not working
+
+drugScreen_DrugRespose=read.table("~/Dropbox/Bild drug screen 2015/Plate_Layouts/Response/DrugScreen_Response_Shelley.txt", row.names=1, header = T,sep='\t', check.names=FALSE)
+View(drugScreen_DrugRespose)
+colnames(drugScreen_DrugRespose)=paste(colnames(drugScreen_DrugRespose),drugScreen_DrugRespose[1,], sep="_")
+
+#only keep cell lines used to BH3
+drugScreen_DrugRespose_allDrugs=drugScreen_DrugRespose[c(3,5,7,10:13,15,16,18,19,20,22,24),]
+View(drugScreen_DrugRespose_allDrugs)
+
+drugScreen_DrugRespose_BH3Assay=drugScreen_DrugRespose_allDrugs[,c(6,13,21,78,85)]
+View(drugScreen_DrugRespose_BH3Assay)
+
+#Now pull out the BH3 drugs only
+drugScreen_DrugRespose_BH3Drugs=drugScreen_DrugRespose_allDrugs[,c(48:59,90:95)]
+
+drugScreen_DrugRespose_Navatoclax=drugScreen_DrugRespose_BH3Drugs[,1:6]
+colnames(drugScreen_DrugRespose_Navatoclax)
+drugScreen_DrugRespose_Obata=drugScreen_DrugRespose_BH3Drugs[,7:12]
+colnames(drugScreen_DrugRespose_Obata)
+drugScreen_DrugRespose_UMI=drugScreen_DrugRespose_BH3Drugs[,13:18]
+colnames(drugScreen_DrugRespose_UMI)
+
+
+
+
+```
+
+Correlate BH3-memetics with peptides
+```{r}
+
+View(peptide_only)
+peptide_only_0=pmax(peptide_only, 0)
+peptide_only_0
+View(peptide_only_neg_MC)
+View(peptide_only_neg_MC_0)
+View(drugScreen_DrugRespose_BH3Drugs)
+
+peptide_raw=round(cor(drugScreen_DrugRespose_BH3Drugs,peptide_only, method="spearman", use="pairwise.complete.obs"),2)
+peptide_raw_0=round(cor(drugScreen_DrugRespose_BH3Drugs,peptide_only_0, method="spearman", use="pairwise.complete.obs"),2)
+peptide_MC=round(cor(drugScreen_DrugRespose_BH3Drugs,peptide_only_neg_MC, method="spearman", use="pairwise.complete.obs"),2)
+peptide_MC_0=round(cor(drugScreen_DrugRespose_BH3Drugs,peptide_only_neg_MC_0, method="spearman", use="pairwise.complete.obs"),2)
+
+peptide_raw_Nav=round(cor(drugScreen_DrugRespose_Navatoclax,peptide_only, method="spearman", use="pairwise.complete.obs"),2)
+peptide_raw_0_Nav=round(cor(drugScreen_DrugRespose_Navatoclax,peptide_only_0, method="spearman", use="pairwise.complete.obs"),2)
+peptide_MC_Nav=round(cor(drugScreen_DrugRespose_Navatoclax,peptide_only_neg_MC, method="spearman", use="pairwise.complete.obs"),2)
+peptide_MC_0_Nav=round(cor(drugScreen_DrugRespose_Navatoclax,peptide_only_neg_MC_0, method="spearman", use="pairwise.complete.obs"),2)
+
+peptide_raw_Obata=round(cor(drugScreen_DrugRespose_Obata,peptide_only, method="spearman", use="pairwise.complete.obs"),2)
+peptide_raw_0_Obata=round(cor(drugScreen_DrugRespose_Obata,peptide_only_0, method="spearman", use="pairwise.complete.obs"),2)
+peptide_MC_Obata=round(cor(drugScreen_DrugRespose_Obata,peptide_only_neg_MC, method="spearman", use="pairwise.complete.obs"),2)
+peptide_MC_0_Obata=round(cor(drugScreen_DrugRespose_Obata,peptide_only_neg_MC_0, method="spearman", use="pairwise.complete.obs"),2)
+
+peptide_raw_UMI=round(cor(drugScreen_DrugRespose_UMI,peptide_only, method="spearman", use="pairwise.complete.obs"),2)
+peptide_raw_0_UMI=round(cor(drugScreen_DrugRespose_UMI,peptide_only_0, method="spearman", use="pairwise.complete.obs"),2)
+peptide_MC_UMI=round(cor(drugScreen_DrugRespose_UMI,peptide_only_neg_MC, method="spearman", use="pairwise.complete.obs"),2)
+peptide_MC_0_UMI=round(cor(drugScreen_DrugRespose_UMI,peptide_only_neg_MC_0, method="spearman", use="pairwise.complete.obs"),2)
+
+pdf("~/Dropbox/BH3/Results/R_Output_Files/PeptidesVSBH3Drugs.pdf")
+#Plot NAV 
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_MC_Nav),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(Navitoclax)\n & Peptide Induced CytoC Release(Mean-Cented, With Negatives)",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_MC_Nav, notecol = "black", notecex = 0.7)   
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_MC_0_Nav),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(Navitoclax) &\n  Peptide Induced CytoC Release\n(Mean-Cented, With Negatives to 0 )",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_MC_0_Nav, notecol = "black", notecex = 0.7)   
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_raw_Nav),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(Navitoclax)\n & Peptide Induced CytoC Release(Raw, With Negatives)",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_raw_Nav, notecol = "black", notecex = 0.7)   
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_raw_0_Nav),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(Navitoclax)\n & Peptide Induced CytoC Release(Raw, Negatives Set to 0)",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_raw_0_Nav, notecol = "black", notecex = 0.7)   
+  
+#Plot Obata
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_MC_Obata),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(Obatoclax)\n & Peptide Induced CytoC Release(Mean-Cented, With Negatives)",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_MC_Obata, notecol = "black", notecex = 0.7)   
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_MC_0_Obata),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(Obatoclax) &\n  Peptide Induced CytoC Release\n(Mean-Cented, With Negatives to 0 )",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_MC_0_Obata, notecol = "black", notecex = 0.7)   
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_raw_Obata),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(Obatoclax)\n & Peptide Induced CytoC Release(Raw, With Negatives)",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_raw_Obata, notecol = "black", notecex = 0.7)   
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_raw_0_Obata),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(Obatoclax)\n & Peptide Induced CytoC Release(Raw, Negatives Set to 0)",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_raw_0_Obata, notecol = "black", notecex = 0.7)   
+  
+#Plot UMI 
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_MC_UMI),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(UMI-77)\n & Peptide Induced CytoC Release(Mean-Cented, With Negatives)",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_MC_UMI, notecol = "black", notecex = 0.7)   
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_MC_0_UMI),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(UMI-77) &\n  Peptide Induced CytoC Release\n(Mean-Cented, With Negatives to 0 )",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_MC_0_UMI, notecol = "black", notecex = 0.7)   
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_raw_UMI),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(UMI-77)\n & Peptide Induced CytoC Release(Raw, With Negatives)",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_raw_UMI, notecol = "black", notecex = 0.7)   
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_raw_0_UMI),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(UMI-77)\n & Peptide Induced CytoC Release(Raw, Negatives Set to 0)",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_raw_0_UMI, notecol = "black", notecex = 0.7)   
+  
+#Choose a drug dose for each BH3 drug
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_MC),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(drug screen)\n & Peptide Induced CytoC Release(Mean-Cented, With Negatives)",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_MC, notecol = "black", notecex = 0.7)   
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_MC_0),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(drug screen) &\n  Peptide Induced CytoC Release\n(Mean-Cented, With Negatives to 0 )",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_MC_0, notecol = "black", notecex = 0.7)   
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_raw),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(drug screen)\n & Peptide Induced CytoC Release(Raw, With Negatives)",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_raw, notecol = "black", notecex = 0.7)   
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(peptide_raw_0),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response(drug screen)\n & Peptide Induced CytoC Release(Raw, Negatives Set to 0)",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = peptide_raw_0, notecol = "black", notecex = 0.7)   
+
+
+dev.off()
+
+```
+#Add back the graphs from EC50 corrs
+
+#Correalte peptides with drugs (respose)
+```{r}
+#drugs only are neg. 
+neg_neg_0=neg_neg_0[,c(2,4,5,8,10)]
+neg_neg_0
+
+
+#pdf("~/Dropbox/BH3/Results/R_Output_Files/PeptidesVSBH3Drugs.pdf")
+#Plot NAV 
+drug_only_cor=round(cor(drugScreen_DrugRespose_BH3Assay,neg_neg_0, method="spearman", use="pairwise.complete.obs"),2)
+par(cex.main=0.7)
+heatmap.2(as.matrix(drug_only_cor),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response %(drug screen)\n & BH3 profiling",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = drug_only_cor, notecol = "black", notecex = 0.7)   
+```
+
+#Correlate with Synergy
+```{r}
+bim_neg_pep_rm_drug
+
+synergy_bim_cor=round(cor(t(bim_neg_pep_rm_drug),drugScreen_DrugRespose_BH3Assay, method="spearman", use="pairwise.complete.obs"),2)
+synergy_bad_cor=round(cor(t(bad_neg_pep_rm_drug),drugScreen_DrugRespose_BH3Assay, method="spearman", use="pairwise.complete.obs"),2)
+synergy_noxa_cor=round(cor(t(noxa_neg_pep_rm_drug),drugScreen_DrugRespose_BH3Assay, method="spearman", use="pairwise.complete.obs"),2)
+
+synergy_bim_cor
+par(cex.main=0.7)
+heatmap.2(as.matrix(synergy_bim_cor),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response %(drug screen)\n & BIM/drug Synergy",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = synergy_bim_cor, notecol = "black", notecex = 0.7)  
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(synergy_bad_cor),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response %(drug screen)\n & BAD/Drug Synergy",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = synergy_bad_cor, notecol = "black", notecex = 0.7)  
+
+par(cex.main=0.7)
+heatmap.2(as.matrix(synergy_noxa_cor),col=bluered, trace='none',na.color="black",  density.info = 'none',sepwidth=c(0.01, 0.01), sepcolor="black", colsep=1:length(test), rowsep=1:length(test), main="Correlation Between Drug Response %(drug screen)\n & NOXA/Drug Synergy",cexRow=0.75, cexCol=0.8,srtCol=45,margins = c(4, 9), cellnote = synergy_bim_cor, notecol = "black", notecex = 0.7)  
+
+
+
+```
+
+
