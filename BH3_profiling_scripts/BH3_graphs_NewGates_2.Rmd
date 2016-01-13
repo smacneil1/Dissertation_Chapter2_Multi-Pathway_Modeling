@@ -225,7 +225,9 @@ for(i in 0:13){ # loop through all 15 cols and calculate response
 #cytoC_reponse_basal_neg=pmax(cytoC_reponse_basal_neg, 0)
 
 
-View(cytoC_reponse_basal_neg)
+colnames(cytoC_reponse_basal_neg)
+write.table(cytoC_reponse_basal_neg, "~/Documents/Multipathway_Modeling/BH3_Profiling/BH3_CytoCRelease_Minus_Death_October.txt")
+
 
 
 ```
@@ -234,8 +236,8 @@ View(cytoC_reponse_basal_neg)
 ```{r}
 
 bad_neg=bim_neg=noxa_neg=neg_neg=NULL
-cytoC_reponse_basal_neg_ordered=cytoC_reponse_basal_neg[,order(names(raw_mean_cyto_reponse))]
-#View(cytoC_reponse_basal_neg_ordered)
+cytoC_reponse_basal_neg_ordered=cytoC_reponse_basal_neg[,order(colnames(raw_mean_cyto_reponse))]
+View(cytoC_reponse_basal_neg_ordered)
 cytoC_reponse_basal_neg_ordered_t=t(cytoC_reponse_basal_neg_ordered)
 View(cytoC_reponse_basal_neg_ordered)
 write.table(cytoC_reponse_basal_neg_ordered, "~/Documents/Multipathway_Modeling/BH3_Profiling/BH3_Raw_CytoC_Release_m_negativeCtrl_ordered.txt",sep='\t',quote=F,col.names = NA)
@@ -262,6 +264,7 @@ bad_neg[,11]
 peptide_only=cbind(bad_neg[,11],bim_neg[,11],noxa_neg[,11])
 peptide_only_0
 peptide_only_0=pmax(peptide_only,0)
+View(peptide_only_0)
 
 pdf("~/Dropbox/Multipathway_profiling_paper/Grant_U54/BAD_NOXA_Plot.pdf")
 # peptide only, set to zerp
@@ -295,6 +298,10 @@ t.test(peptide_only_0[,1],peptide_only_0[,3]  )
 peptide_only_0_GF1=peptide_only_0[c("Luminal_ERRB2_BT474","Basal_ERBB2_HCC1569","Basal_HCC70","Luminal_MCF7", "Luminal_ERBB2_MDAMB361","Luminal_T47D", "Luminal_ERBB2_ZR7530" ),]
 peptide_only_0_GF2=peptide_only_0[c("Claudin_BT549", "Basal_HCC1143", "Basal_HCC1806", "Basal_HCC1937", "Basal_ERRB2_HCC1954", "Claudin_HCC38" , "Basal_ERRB2_JIMT1"),]
 
+View(peptide_only_0_GF1)
+View(peptide_only_0_GF2)
+
+
 peptide_only_0_GF1_MC=peptide_only_neg_MC_0[c("BT474","HCC1569","HCC70","MCF7", "MDAMB361","T47D", "ZR7530" ),]
 peptide_only_0_GF2_MC=peptide_only_neg_MC_0[c("BT549", "HCC1143", "HCC1806", "HCC1937", "HCC1954", "HCC38" , "JIMT1"),]
 peptide_only_0_GF2_MC
@@ -311,9 +318,11 @@ pdf("~/Dropbox/Multipathway_profiling_paper/Grant_U54/GF1_GF2_BH3_Boxplot.pdf")
 
 peptide_only_0_GF1[,1]
 peptide_only_0_GF2[,1]
+View(peptide_only_0_GF1[,1])
 
 boxplot(peptide_only_0_GF1[,1],peptide_only_0_GF2[,1], ylab="% Cytochrome C Release",names = c("AKT/BAD/IGF1R", " EGFR/KRAS/RAF"), col = c("red", "grey"), main="Response to BAD", ylim=c(-3,18))
 t.test(peptide_only_0_GF1[,1],peptide_only_0_GF2[,1]  )
+
 boxplot(peptide_only_0_GF1_MC[,1],peptide_only_0_GF2_MC[,1], ylab="% Cytochrome C Release",names = c("AKT/BAD/IGF1R", " EGFR/KRAS/RAF"), col = c("red", "grey"), main="Response to BAD(MC,0)", ylim=c(-3,20))
 t.test(peptide_only_0_GF1_MC[,1],peptide_only_0_GF2_MC[,1]  )
 boxplot(peptide_only_GF1_MC[,1],peptide_only_GF2_MC[,1], ylab="% Cytochrome C Release",names = c("AKT/BAD/IGF1R", " EGFR/KRAS/RAF"), col = c("red", "grey"), main="Response to BAD(MC)", ylim=c(-15,20))
@@ -329,6 +338,8 @@ boxplot(peptide_only_0_GF1_MC[,3],peptide_only_0_GF2_MC[,3], ylab="% Cytochrome 
 t.test(peptide_only_0_GF1_MC[,3],peptide_only_0_GF2_MC[,3]  )
 boxplot(peptide_only_GF1_MC[,3],peptide_only_GF2_MC[,3], ylab="% Cytochrome C Release",names = c("AKT/BAD/IGF1R", " EGFR/KRAS/RAF"), col = c("red", "grey"), main="Response to NOXA(MC)", ylim=c(-25,20))
 t.test(peptide_only_GF1_MC[,3],peptide_only_GF2_MC[,3]  )
+
+peptide_only_0_GF1[,2]
 
 
 #bim
