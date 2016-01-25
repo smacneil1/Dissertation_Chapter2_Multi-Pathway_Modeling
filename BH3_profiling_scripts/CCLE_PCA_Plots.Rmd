@@ -1,0 +1,30 @@
+---
+title: "CCLE_Breast"
+output: html_document
+---
+
+
+```{r}
+#Read in CCLE Data
+CCLE_Breast_Metadata_Removed=read.table("Documents/bild_signatures/CCLE_data/CCLE_Breast_RNAseq_TPMlog.txt", sep='\t', check.names = FALSE, stringsAsFactors=FALSE, header=1, row.names=1)
+head(CCLE_Breast_Metadata_Removed)
+
+# remove the ones I need
+CCLE_Breast_Xiao=CCLE_Breast_Metadata_Removed[,c(23,28,1,16,53,30,3)]
+
+
+
+```
+
+#Plot all
+```{r}
+sub<-56
+pcaplot(CCLE_Breast_Metadata_Removed,sub, center=T,scale=F)
+```
+
+#PCA plot the 7 I need
+```{r}
+sub=7
+pcaplot(CCLE_Breast_Xiao,sub, center=T,scale=F)
+```
+
