@@ -28,5 +28,76 @@ View(kraswt_250)
 raf_175=read.csv("raf_175_gene_list/adap_adap_single/TCGA_pathway_activity_testset_raf175_adap_adap.csv", row.names = 1, header = 1,sep=',')
 View(raf_175)
 
+colnames(akt_20)
+```
+
+#Merge them all
+```{r}
+TCGA_adap_adap_predictions=cbind(akt_20,bad_225,igf1r_75,egfr_15, her2_75, krasgv_125, kraswt_250, krasqh_150,raf_175)
+colnames(TCGA_adap_adap_predictions)= c("akt_20", "bad_225", "egfr_15", "her2_75", "igf1r_75", "krasv_125", "krasqh_150", "kraswt_250", "raf_175")
+View(TCGA_adap_adap_predictions)
+write.table(TCGA_adap_adap_predictions, "TCGA_adap_adap_refcombat_balancedsig_predictions.txt" ,sep='\t',quote=F,col.names = NA)
+```
+
+# Subsets phenotypes
+```{r}
+AKT_phenotype=subset(TCGA_adap_adap_predictions ,select = c(akt_20,her2_75, igf1r_75))
+colnames(TCGA_adap_adap_predictions)
+EGFR_phenotype=subset(TCGA_adap_adap_predictions, select = c(bad_225, egfr_15, raf_175, krasqh_150, krasqh_150))
+View(EGFR_phenotype)
+View(AKT_phenotype)
+```
+
+# Average the phenotypes
+```{r}
+Mean_AKT_phenotype=rowMeans(AKT_phenotype)
+View(Mean_AKT_phenotype)
+
+Mean_EGFR_phenotype=rowMeans(EGFR_phenotype)
+View(Mean_EGFR_phenotype)
+
+AKT_EGFR_Means=as.matrix(cbind(Mean_AKT_phenotype,Mean_EGFR_phenotype))
+head(AKT_EGFR_Means)
+
+```
+
+# Classify all samples into growth phenotypes
+```{r}
+Phenotype <- ifelse(AKT_EGFR_Means[,1]>AKT_EGFR_Means[,2], "AKT", "EGFR")
+Phenotype=as.matrix(Phenotype)
+
+summary(Phenotype) # 1/4 EGFR 3/4 AKT
+
+Phenotype=cbind(AKT_EGFR_Means,Phenotype)
+View(Phenotype)
+colnames(Phenotype)[3]="Growth_Phenotype"
+```
+
+
+#Determine which samples have IGF1R activated(0.5)
+```{r}
+
+Phenotype_igf1r=cbind(Phenotype,igf1r_75)
+View(Phenotype_igf1r)
+IGF1R_Phenotype <- ifelse(Phenotype_igf1r$igf1r>0.5, "IGF1R ON", "IGF1R OFF")
+IGF1R_Phenotype=as.matrix(IGF1R_Phenotype)
+View(IGF1R_Phenotype)
+summary(IGF1R_Phenotype) # 50/50 for IGF1R on or off. 
+Phenotype_igf1r=cbind(Phenotype_igf1r,IGF1R_Phenotype)
+colnames(Phenotype_igf1r)
+
+```
+
+#Determine which percentages of each phenotype have IGF1R activated(0.05)
+```{r}
+AKT_Phenotype=subset(Phenotype_igf1r,  Growth_Phenotype=="AKT")
+View(AKT_Phenotype)
+summary(AKT_Phenotype) # 356/837  42%
+
+
+EGFR_Phenotype=subset(Phenotype_igf1r,  Growth_Phenotype=="EGFR")
+View(EGFR_Phenotype) 
+summary(EGFR_Phenotype) #186/270  = 68%
+
 ```
 

@@ -1,0 +1,380 @@
+---
+title: "Analysis of BH3 peptide experiments"
+output: html_document
+---
+
+# Create the response Files
+```{r}
+
+library("psych")
+library("dplyr")
+source("~/Documents/bild_signatures/Rmarkdowns_scripts/Key_ASSIGN_functions.Rmd")
+
+#cell_lines_subtypes<-read.table("~/Dropbox/BH3/Data/cellLine_subtypes.txt", row.names = 1, header = 1,sep='\t')
+
+
+if (!require("gplots")) {
+  install.packages("gplots", dependencies = TRUE)
+  library(gplots)
+}
+if (!require("RColorBrewer")) {
+  install.packages("RColorBrewer", dependencies = TRUE)
+  library(RColorBrewer)
+}
+
+setwd("~/Documents/Multipathway_Modeling/BH3_Profiling/BH3_January/")
+
+results=read.csv("BH3_Jan_BothPlates_CytoC_FloJo.txt",header = T,sep='\t', row.names=1)
+View(results)
+median=read.csv("BH3_Jan_BothPlates_CytoC_FloJo_Median.txt",header = T,sep='\t', row.names=1)
+View(median)
+median=median[2]
+
+                 
+sequence=seq(from = 1, to = 640, by = 4)
+Names_CytoC=row.names(results)[sequence]
+View(Names_CytoC)
+
+#average all the reps
+n <- 4;
+CytoRelease_Mean=aggregate(results,list(rep(1:(nrow(results)%/%n+1),each=n,len=nrow(results))),mean, na.rm = TRUE)[-1];
+
+Median_Mean=aggregate(median,list(rep(1:(nrow(median)%/%n+1),each=n,len=nrow(median))),mean, na.rm = TRUE)[-1];
+View(Median_Mean)
+Median_Mean=cbind(Names_CytoC,Median_Mean)
+
+CytoRelease_Mean=cbind(Names_CytoC,CytoRelease_Mean)
+View(CytoRelease_Mean)
+
+write.table(CytoRelease_Mean,"~/Documents/Multipathway_Modeling/BH3_Profiling/BH3_January/BH3_January_CytoC_Mean.txt",sep='\t',quote=F,col.names = NA)
+write.table(Median_Mean,"~/Documents/Multipathway_Modeling/BH3_Profiling/BH3_January/BH3_January_CytoC_Mean_MedianNorm.txt",sep='\t',quote=F,col.names = NA)
+
+#transform to columns in excel, read back in
+CytoCRelease_Mean_Col=read.table("BH3_January_CytoC_Mean_Columns.txt",header = T,sep='\t', row.names=1)
+
+Median_Mean_Col=read.table("BH3_January_CytoC_Mean_MedianNorm_Column.txt",header = T,sep='\t', row.names=1)
+View(Median_Mean_Col)
+
+
+
+
+CytoCRelease_Mean_Col_t=t(CytoCRelease_Mean_Col)
+View(CytoCRelease_Mean_Col_t)
+NegativeControl=CytoCRelease_Mean_Col[8,]
+NegativeControl=as.matrix(NegativeControl)
+
+#remove the basal death
+CytoMean_RmBasal=sweep(CytoCRelease_Mean_Col, 2, NegativeControl, FUN='-')
+CytoMean_RmBasal_t=t(CytoMean_RmBasal)
+CytoMean_RmBasal_t[CytoMean_RmBasal_t < 0] <- 0
+View(CytoMean_RmBasal_t)
+CytoMean_RmBasal[CytoMean_RmBasal < 0] <- 0
+View(CytoMean_RmBasal)
+
+View(CytoMean_RmBasal_t)
+write.table(CytoCRelease_Mean_Col_t,"~/Documents/Multipathway_Modeling/BH3_Profiling/BH3_January/BH3_January_CytoCRelease_Mean_Col_t.txt",sep='\t',quote=F,col.names = NA)
+
+write.table(CytoMean_RmBasal_t,"~/Documents/Multipathway_Modeling/BH3_Profiling/BH3_January/BH3_January_CytoCRelease_Mean_RmBasal.txt",sep='\t',quote=F,col.names = NA)
+
+
+View(CytoMean_RmBasal_t)
+
+```
+
+#Normalize median method
+```{r}
+
+test=sweep(CytoCRelease_Mean_Col, 2, NegativeControl, FUN='-')
+
+
+NegCtrl=Median_Mean_Col[8,]
+PosCtrl=Median_Mean_Col[7,]
+PosCtrl=as.matrix(PosCtrl)
+NegMinusPos=sweep(NegCtrl,2, PosCtrl, FUN='-')
+View(NegMinusPos)
+NegMinusPos=as.matrix(NegMinusPos)
+SampleMinusPostive=sweep(Median_Mean_Col,2, PosCtrl, FUN='-')
+DivideStep=sweep(SampleMinusPostive,2,NegMinusPos, FUN='/')
+View(DivideStep)
+one=as.matrix(DivideStep[8,])
+View(one)
+Subtract1=1-DivideStep
+Subtract1[Subtract1 < 0] <- 0
+View(Subtract1)
+Subtract1_t=t(Subtract1)
+colnames(Subtract1)[3]="BT484"
+View(Subtract1)
+
+write.table(Subtract1_t,"~/Documents/Multipathway_Modeling/BH3_Profiling/BH3_January/BH3_January_MedianCytoC_Normalized_Final.txt",sep='\t',quote=F,col.names = NA)
+
+
+```
+
+
+
+#Seperate the phenotypes for gate normalization
+```{r}
+row.names(CytoMean_RmBasal_t)
+GF1_AKT=CytoMean_RmBasal_t[c("BT474", "HCC1428", "ZR751", "T47D", "AU565", "BT484", "CAMA1", "HCC1419", "MCF7", "MDAMB175"),]
+View(GF1_AKT)
+GF2_EGFR=CytoMean_RmBasal_t[c("HCC1954", "HCC38", "HS578T", "HCC1806", "MDAMB231", "HCC1937", "HCC70", "JIMT1","HCC1143"),]
+View(GF2_EGFR)
+
+#without treated ones
+
+GF1_AKT_treatRm=CytoMean_RmBasal_t[c("ZR751", "T47D", "AU565", "BT484", "CAMA1", "HCC1419", "MCF7", "MDAMB175"),]
+
+GF2_EGFR_treatRm=CytoMean_RmBasal_t[c( "HS578T", "HCC1806", "MDAMB231", "HCC1937", "HCC70", "JIMT1","HCC1143"),]
+
+#raw
+GF1_AKT_raw=CytoCRelease_Mean_Col_t[c("BT474", "HCC1428", "ZR751", "T47D", "AU565", "BT484", "CAMA1", "HCC1419", "MCF7", "MDAMB175"),]
+View(GF1_AKT)
+dim(GF1_AKT_raw)
+GF2_EGFR_raw=CytoCRelease_Mean_Col_t[c("HCC1954", "HCC38", "HS578T", "HCC1806", "MDAMB231", "HCC1937", "HCC70", "JIMT1","HCC1143"),]
+View(GF2_EGFR)
+
+```
+
+#Heat map
+```{r}
+pdf("BH3_Boxplots_Jan16_labMeeting.pdf")
+colnames(CytoMean_RmBasal_t)
+heatmap.2(t(as.matrix(CytoMean_RmBasal_t[,1:6])), col = bluered, trace='none',margins = c(9, 9),cexCol=1)
+
+heatmap.2(t(as.matrix(CytoCRelease_Mean_Col_t[,1:6])), col = bluered, trace='none',margins = c(9, 9),cexCol=1)
+
+heatmap.2(t(as.matrix(Subtract1_t[,1:6])), col = bluered, trace='none',margins = c(9, 9),cexCol=1)
+
+```
+
+#Boxplot them normalized
+```{r}
+
+#BIM 1
+View(GF1_AKT[,1])
+boxplot(GF1_AKT[,1],GF2_EGFR[,1], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BIM 1 Gates Normalization", ylim=c(0,100))
+text(1,99,"p-value = 0.93")
+t.test(GF1_AKT[,1],GF2_EGFR[,1])
+
+#BIM 1
+boxplot(GF1_AKT_treatRm[,1],GF2_EGFR_treatRm[,1], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BIM 1 Gates Normalization Rm Treated", ylim=c(0,100))
+text(1,99,"p-value = 0.0.864")
+t.test(GF1_AKT_treatRm[,1],GF2_EGFR_treatRm[,1]) # same
+
+#BIM 1
+View(GF1_AKT_raw[,1])
+boxplot(GF1_AKT_raw[,1],GF2_EGFR_raw[,1], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BIM 1 Gates Normalization Raw Data", ylim=c(0,100))
+text(1,99,"p-value = 0.5602")
+t.test(GF1_AKT_raw[,1],GF2_EGFR_raw[,1])
+
+#BIM 1
+
+boxplot(GF1_AKT_Med[,1],GF2_EGFR_Med[,1], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BIM 1 Median Normalization", ylim=c(0,1))
+text(1,1,"p-value = 0.6361")
+t.test(GF1_AKT_Med[,1],GF2_EGFR_Med[,1])
+
+#BIM 1
+GF1_AKT_treatRm_Med
+boxplot(GF1_AKT_treatRm_Med[,1],GF2_EGFR_treatRm_Med[,1], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BIM 1 Median Normalization(Treated Rm)", ylim=c(0,1))
+text(1,1,"p-value = 0.6486")
+t.test(GF1_AKT_treatRm_Med[,1],GF2_EGFR_treatRm_Med[,1])
+
+
+
+```
+
+#BIM 10
+```{r}
+boxplot(GF1_AKT[,2],GF2_EGFR[,2], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BIM 10 Gates Normalization", ylim=c(0,100))
+text(1,99,"p-value = 0.9358")
+t.test(GF1_AKT[,2],GF2_EGFR[,2])
+
+#BIM 10
+boxplot(GF1_AKT_treatRm[,2],GF2_EGFR_treatRm[,2], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BIM 10 Gates Normalization Rm Treated", ylim=c(0,100))
+text(1,99,"p-value = 0.6933")
+t.test(GF1_AKT_treatRm[,2],GF2_EGFR_treatRm[,2])
+
+#BIM 10
+boxplot(GF1_AKT_raw[,2],GF2_EGFR_raw[,2], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BIM 10 Gates Normalization Raw Data", ylim=c(0,100))
+text(1,99,"p-value = 0.2233")
+t.test(GF1_AKT_raw[,2],GF2_EGFR_raw[,2])
+
+#BIM 10
+boxplot(GF1_AKT_Med[,2],GF2_EGFR_Med[,2], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BIM 10 Median Normalization", ylim=c(0,1.1))
+text(1,1,"p-value = 0.9161")
+t.test(GF1_AKT_Med[,2],GF2_EGFR_Med[,2])
+
+#BIM 10
+boxplot(GF1_AKT_treatRm_Med[,2],GF2_EGFR_treatRm_Med[,2], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BIM 10 Median Normalization(Treated Rm)", ylim=c(0,1.1))
+text(1,0.5,"p-value = 0.5827")
+t.test(GF1_AKT_treatRm_Med[,2],GF2_EGFR_treatRm_Med[,2])
+
+
+
+
+```
+
+```{r}
+#Bad10
+boxplot(GF1_AKT[,3],GF2_EGFR[,3], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BAD 10 Gates Normalization", ylim=c(0,100))
+text(1,99,"p-value = 0.4989")
+t.test(GF1_AKT[,3],GF2_EGFR[,3])
+
+#Bad10
+boxplot(GF1_AKT_treatRm[,3],GF2_EGFR_treatRm[,3], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BAD 10 Gates Normalization Rm Treated", ylim=c(0,100))
+text(1,99,"p-value = 0.4131")
+t.test(GF1_AKT_treatRm[,3],GF2_EGFR_treatRm[,3]) #higher in EGFR
+
+#Bad10
+boxplot(GF1_AKT_raw[,3],GF2_EGFR_raw[,3], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BAD 10 Gates Normalization Raw Data", ylim=c(0,100))
+text(1,99,"p-value =  0.9548")
+t.test(GF1_AKT_raw[,3],GF2_EGFR_raw[,3])
+
+#Bad10
+boxplot(GF1_AKT_Med[,3],GF2_EGFR_Med[,3], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BAD 10 Median Normalization", ylim=c(0,1))
+text(1,1,"p-value =  0.6906")
+t.test(GF1_AKT_Med[,3],GF2_EGFR_Med[,3])
+
+#Bad10
+boxplot(GF1_AKT_treatRm_Med[,3],GF2_EGFR_treatRm_Med[,3], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BAD 10 Median Normalization(Treated Rm)", ylim=c(0,1.25))
+text(1,1,"p-value =  0.4559")
+t.test(GF1_AKT_treatRm_Med[,3],GF2_EGFR_treatRm_Med[,3])
+
+```
+
+```{r}
+#BAD100
+boxplot(GF1_AKT[,4],GF2_EGFR[,4], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BAD 100 Gates Normalization", ylim=c(0,100))
+text(1,99,"p-value = 0.4538")
+t.test(GF1_AKT[,4],GF2_EGFR[,4])
+
+#BAD100
+boxplot(GF1_AKT_treatRm[,4],GF2_EGFR_treatRm[,4], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BAD 100 Gates Normalization Rm Treated", ylim=c(0,100))
+text(1,99,"p-value = 0.5099")
+t.test(GF1_AKT_treatRm[,4],GF2_EGFR_treatRm[,4]) # higher in EGFR
+
+#BAD100
+boxplot(GF1_AKT_raw[,4],GF2_EGFR_raw[,4], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BAD 100 Gates Normalization Raw Data", ylim=c(0,100))
+text(1,99,"p-value = 0.3415")
+t.test(GF1_AKT_raw[,4],GF2_EGFR_raw[,4])
+
+
+#BAD100
+boxplot(GF1_AKT_Med[,4],GF2_EGFR_Med[,4], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BAD 100 Median Normalization", ylim=c(0,1))
+text(1,1,"p-value = 0.3328")
+t.test(GF1_AKT_Med[,4],GF2_EGFR_Med[,4])
+
+#BAD100
+boxplot(GF1_AKT_treatRm_Med[,4],GF2_EGFR_treatRm_Med[,4], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="BAD 100 Median Normalization(Treated Rm)", ylim=c(0,1.3))
+text(1,1,"p-value = 0.4785")
+t.test(GF1_AKT_treatRm_Med[,4],GF2_EGFR_treatRm_Med[,4])
+
+
+
+```
+
+```{r}
+#NOXA10
+boxplot(GF1_AKT[,5],GF2_EGFR[,5], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="NOXA 10 Gates Normalization", ylim=c(0,100))
+text(1,99,"p-value = 0.3461")
+t.test(GF1_AKT[,5],GF2_EGFR[,5])
+
+#NOXA10
+boxplot(GF1_AKT_treatRm[,5],GF2_EGFR_treatRm[,5], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="NOXA 10 Gates Normalization Rm Treated", ylim=c(0,100))
+text(1,99,"p-value = 0.2979")
+t.test(GF1_AKT_treatRm[,5],GF2_EGFR_treatRm[,5])
+
+#NOXA10
+boxplot(GF1_AKT_raw[,5],GF2_EGFR_raw[,5], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="NOXA 10 Gates Normalization Raw Data", ylim=c(0,100))
+text(1,99,"p-value = 0.9752")
+t.test(GF1_AKT_raw[,5],GF2_EGFR_raw[,5])
+
+#NOXA10
+boxplot(GF1_AKT_Med[,5],GF2_EGFR_Med[,5], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="NOXA 10 Median Normalization", ylim=c(0,1))
+text(1,1,"p-value = 0.6805")
+t.test(GF1_AKT_Med[,5],GF2_EGFR_Med[,5])
+
+#NOXA10
+boxplot(GF1_AKT_treatRm_Med[,5],GF2_EGFR_treatRm_Med[,5], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="NOXA 10 Median Normalization(Treated Rm)", ylim=c(0,1))
+text(1,1,"p-value = 0.3444")
+t.test(GF1_AKT_treatRm_Med[,5],GF2_EGFR_treatRm_Med[,5])
+
+
+
+```
+
+```{r}
+
+#NOXA100
+boxplot(GF1_AKT[,6],GF2_EGFR[,6], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="NOXA 100 Gates Normalization", ylim=c(0,100))
+text(1,99,"p-value = 0.7327")
+t.test(GF1_AKT[,6],GF2_EGFR[,6])
+
+
+#NOXA100
+boxplot(GF1_AKT_treatRm[,6],GF2_EGFR_treatRm[,6], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="NOXA 100 Gates Normalization Rm Treated", ylim=c(0,100))
+text(1,99,"p-value =  0.7698")
+t.test(GF1_AKT_treatRm[,6],GF2_EGFR_treatRm[,6])
+
+
+#NOXA100
+boxplot(GF1_AKT_raw[,6],GF2_EGFR_raw[,6], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="NOXA 100 Gates Normalization Raw Data", ylim=c(0,100))
+text(1,99,"p-value =0.8876")
+t.test(GF1_AKT_raw[,6],GF2_EGFR_raw[,6])
+
+#NOXA100
+boxplot(GF1_AKT_Med[,6],GF2_EGFR_Med[,6], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="NOXA 100 Median Normalization", ylim=c(0,1))
+text(1,1,"p-value =0.905")
+t.test(GF1_AKT_Med[,6],GF2_EGFR_Med[,6])
+
+#NOXA100
+boxplot(GF1_AKT_treatRm_Med[,6],GF2_EGFR_treatRm_Med[,6], ylab="% Cytochrome C Release",names = c("AKT", "EGFR"), col = c("red", "grey"), main="NOXA 100 Median Normalization(Treated Rm)", ylim=c(0,1.2))
+text(1,1,"p-value =0.8193")
+t.test(GF1_AKT_treatRm_Med[,6],GF2_EGFR_treatRm_Med[,6])
+
+dev.off()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+#seperate phenotypes median norm method
+```{r}
+View(Subtract1_t)
+rownames(Subtract1_t)
+
+GF1_AKT_Med=Subtract1_t[c("BT474", "HCC1428", "ZR751", "T47D", "AU565", "BT483", "CAMA1", "HCC1419", "MCF7", "MDAMB175"),]
+View(GF1_AKT_Med)
+GF2_EGFR_Med=Subtract1_t[c("HCC1954", "HCC38", "HS578T", "HCC1806", "MDAMB231", "HCC1937", "HCC70", "JIMT1","HCC1143"),]
+View(GF2_EGFR_Med)
+
+#without treated ones
+
+GF1_AKT_treatRm_Med=Subtract1_t[c("ZR751", "T47D", "AU565", "BT483", "CAMA1", "HCC1419", "MCF7", "MDAMB175"),]
+
+GF2_EGFR_treatRm_Med=Subtract1_t[c( "HS578T", "HCC1806", "MDAMB231", "HCC1937", "HCC70", "JIMT1","HCC1143"),]
+
+```
+
+
+
+
+#center_scale <- function(x) {
+#    scale(x, scale = FALSE)
+#}
+#mean_center_CytoCRelease_Mean_rm4n8=center_scale(CytoCRelease_Mean_rm4n8)
+
+
+```
+
+

@@ -23,6 +23,16 @@ View(MclDependence)
 Barnard(MclDependence)
 
 #Read in CCLE Data
+CCLE_Breast_Metadata_Removed=read.table("Documents/bild_signatures/CCLE_data/CCLE_Breast_RNAseq_TPMlog.txt", sep='\t', check.names = FALSE, stringsAsFactors=FALSE, header=1, row.names=1)
+head(CCLE_Breast_Metadata_Removed)
+colnames(CCLE_Breast_Metadata_Removed)
+dim(CCLE_Breast_Metadata_Removed)
+CCLE_Breast_Xiao=CCLE_Breast_Metadata_Removed[,c(23,28,1,16,53,30,3)]
+View(CCLE_Breast_Xiao)
+sub=7
+pcaplot(CCLE_Breast_Xiao,sub, center=T,scale=F)
+sub<-56
+pcaplot(CCLE_Breast_Metadata_Removed,sub, center=T,scale=F)
 
 
 
