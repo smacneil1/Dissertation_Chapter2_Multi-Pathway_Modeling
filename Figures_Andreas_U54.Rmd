@@ -1,0 +1,109 @@
+---
+title: "Figures_Andrea_Grant"
+output: pdf_document
+---
+
+
+```{r}
+
+View(comb_drug_grant)
+comb_drug_grant=comb_drug[,c(1,3:108)]
+#pdf("~/Desktop/subtypes_ICBP.pdf")
+View(multi_pathway_best)
+
+basal_grant<-subset(comb_drug_grant,comb_drug_grant$Transcriptional.subtype...ERBB2.status=="BASAL",select = c((colnames(comb_drug_grant)%in%colnames(multi_pathway_best))))
+dim(basal_grant)
+
+her_grant<-subset(comb_drug_grant,comb_drug_grant$Transcriptional.subtype...ERBB2.status=="ERBB2", select = c((colnames(comb_drug_grant)%in%colnames(multi_pathway_best))))
+dim(her_grant)
+
+her_basal_grant<-subset(her_grant,her$Transcriptional.subtype=="BASAL",select = c((colnames(her_grant)%in%colnames(multi_pathway_best))))
+dim(her_basal_grant)
+
+her_lum_grant<-subset(her_grant,her$Transcriptional.subtype=="LUMINAL",select = c((colnames(her_grant)%in%colnames(multi_pathway_best))))#,select = c((colnames(her)%in%colnames(single_pathway_best))))
+dim(her_lum_grant)
+
+claudin_grant<-subset(comb_drug_grant,comb_drug_grant$Transcriptional.subtype...ERBB2.status=="Claudin-low",select = c((colnames(comb_drug_grant)%in%colnames(multi_pathway_best))))
+dim(claudin_grant)
+
+luminal_grant<-subset(comb_drug_grant,comb_drug_grant$Transcriptional.subtype...ERBB2.status=="LUMINAL",select = c((colnames(comb_drug_grant)%in%colnames(multi_pathway_best))))
+dim(luminal_grant)
+
+norm_grant<-subset(comb_drug_grant,comb_drug_grant$Transcriptional.subtype...ERBB2.status=="NORMAL",select = c((colnames(comb_drug_grant)%in%colnames(multi_pathway_best))))
+dim(norm_grant)
+
+subtypes=rbind(basal_grant,her_basal_grant,her_lum_grant,claudin_grant,luminal_grant,norm_grant)
+View(subtypes)                                                                                
+View(comb_drug_grant)
+pdf("~/Documents/Multipathway_Modeling/bild_signatures-master/ICBP_Shelley_HeatMap_Multi_grant_2.pdf")
+heatmap.2(as.matrix(subtypes), RowSideColors = c(rep("gray", nrow(basal_grant)),rep("blue", nrow(her_basal_grant)),rep("brown", nrow(her_lum_grant)),rep("black", nrow(claudin_grant)),rep("green",nrow(luminal_grant)),rep("yellow",nrow(norm_grant))),col=bluered,density.info = 'none',trace="none",margins=c(6.5,6.5),main="Multipathway activity \n within breast cancer subtypes\n(Pathway-based not scaled)", dendrogram="none", Colv=TRUE, Rowv=TRUE, cexRow=0.7, cexCol=1.5 )#,scale='row')#,Rowv=F,)
+par(lend = 1)           # square line ends for the color legend
+
+legend("topright",legend = c("Basal", "HER2-Basal", "HER2-Luminal","Claudin","Luminal","Normal-like"), col = c("gray", "blue","brown" ,"black","green","yellow"),  lty= 1,lwd = 10,cex = 0.55)
+dev.off()
+```
+
+
+```{r}
+# All ICBP drug response and signatues 
+ordered_grant<-rbind(basal_grant,her_basal_grant,her_lum_grant,claudin_grant,luminal_grant,norm_grant)
+View(ordered_grant)
+ord_comb_drug_grant<-comb_drug_grant[rownames(ordered_grant),]
+View(ord_comb_drug_grant)
+
+View(ord_comb_drug[,1:8])
+colnames(ord_comb_drug_grant[,1:3])
+colnames(ord_comb_drug_grant[,20:108])
+#both KRAS
+pdf("~/Documents/Multipathway_Modeling/bild_signatures-master/ICBP_Shelley_HeatMap_Multi_Drugs_grant.pdf")
+
+t(ord_comb_drug_grant[,20:108])
+t(ord_comb_drug_grant[,1:8])
+colnames(ord_comb_drug_grant)
+
+#ord_comb_drug_grant=ord_comb_drug_grant[,c("AKT","HER2","IGF1R","RAF","EGFR","KRASGV","KRASQH" ,"5.FdUR","5.FU","Carboplatin","CGC.11047","CGC.11144","Cisplatin","CPT.11","Docetaxel","Doxorubicin","Epirubicin","Etoposide","Gemcitabine","ICRF.193","Ixabepilone","Methotrexate","Paclitaxel","Pemetrexed","Topotecan","AS.252424","BEZ235","BIBW2992","Everolimus","GSK1059615","GSK1059868","GSK1838705","GSK2119563","GSK2126458","GSK2141795","Lapatinib","PF.4691502","Rapamycin","Sigma.AKT1.2.inhibitor","Temsirolimus","Triciribine","Tykerb.IGF1R..1.1.","AG1478","AZD6244","ERKi.II..FR180304.","Erlotinib","Gefitinib","GSK1120212","L.779450","PD98059","Sorafenib")]
+
+
+ord_comb_drug_grant=ord_comb_drug_grant[,c("AKT","HER2","IGF1R","RAF","EGFR","KRASGV","KRASQH","CGC.11144","5.FU", "Methotrexate","5.FdUR", "CGC.11047","Cisplatin","Etoposide","Paclitaxel","Carboplatin","Docetaxel","Ixabepilone","CPT.11","Epirubicin","Gemcitabine","Doxorubicin","Pemetrexed","Topotecan","ICRF.193","Tykerb.IGF1R..1.1.","GSK1838705","L.779450","Erlotinib","GSK1120212","AZD6244","Gefitinib","BIBW2992","AG1478", "GSK2141795","Everolimus","Rapamycin","PF.4691502","Sigma.AKT1.2.inhibitor","Temsirolimus","Triciribine","AS.252424","GSK2126458","ERKi.II..FR180304.","BEZ235","Lapatinib","GSK1059615","PD98059","GSK2119563")]
+
+View(ord_comb_drug_grant)
+dim(ord_comb_drug_grant)0.04
+View(ord_comb_drug_grant[,8:49])
+dim(ord_comb_drug_grant)
+View(ord_comb_drug_grant[,1:7])
+
+correlation=cor(ord_comb_drug_grant[,8:49],ord_comb_drug_grant[,1:7], method="spearman",use="pairwise")
+View(correlation)
+pdf("~/Documents/Multipathway_Modeling/bild_signatures-master/ICBP_Shelley_HeatMap_Multi_Drugs_grant_NoCluster.pdf")
+heatmap.2(as.matrix(correlation),col=bluered,trace='none',density.info = 'none',margins = c(6,6),cexCol = 1.3,cexRow = 0.4,scale = "row",main="Pathway-drug sensitivity \n Spearman correlations", dendrogram="none",Colv=T, Rowv=F, lhei = c(1,11))
+par(lwd=1)
+dev.off()
+#only one KRAS
+#heatmap.2(as.matrix(cor(ord_comb_drug[,1:8],ord_comb_drug[,19:108],method="spearman",use="pairwise")),col=bluered,trace='none',density.info = 'none',margins = c(9,6),cexCol = 0.75,scale = "row",main="")#Pathway-drug sensitivity \n Spearman correlations")
+
+```
+
+```{r}
+#pdf("~/Documents/Multipathway_Modeling/bild_signatures-master/TCGA_Shelley_HeatMap_grant.pdf")
+#head(ord_subtypes_preds_SM[,c(3,2:8])
+heatmap.2(as.matrix(ord_subtypes_preds_SM[,2:8]), RowSideColors = c(rep("gray", sum(select_subtypes_preds$PAM50=="Basal")),rep("blue", sum(select_subtypes_preds$PAM50=="Her2")),rep("brown", sum(select_subtypes_preds$PAM50=="LumA")),rep("green", sum(select_subtypes_preds$PAM50=="LumB")),rep("yellow",sum(select_subtypes_preds$PAM50=="Normal"))),col=bluered,density.info = 'none',trace="none",margins=c(6.5,6.5),main="",labRow = F,dendrogram="none", Colv=T, Rowv=TRUE, cexRow=0.1, cexCol=1.5)#,scale='row')#,Rowv=F,Colv=F)
+par(lend = 1)           # square line ends for the color legend
+legend("topright",legend = c("Basal", "HER2", "Luminal A","Luminal B","Normal-like"), col = c("gray", "blue","brown", "green","yellow"),  lty= 1,lwd = 10,cex = 0.55)
+dev.off()
+```
+
+# BH3 figure 
+```{r}
+peptide_only_0_GF1_MC
+peptide_only_0_GF2_MC
+
+
+pdf("~/Dropbox/Multipathway_profiling_paper/Grant_U54/BH3_BIM_Boxplot_grant.pdf")
+boxplot(peptide_only_0_GF1_MC[,2],peptide_only_0_GF2_MC[,2], ylab="% Cytochrome C Release",names = c("AKT/BAD/IGF1R", " EGFR/KRAS/RAF"), col = c("red", "grey"), main="Response to BIM(MC,0)", ylim=c(-1,10), lwd=3)
+box(lwd=3)
+t.test(peptide_only_0_GF1_MC[,2],peptide_only_0_GF2_MC[,2]  )
+dev.off()
+
+
+```
+
