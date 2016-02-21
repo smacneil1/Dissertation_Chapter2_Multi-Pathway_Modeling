@@ -4,24 +4,32 @@ setwd("~/Documents/Multipathway_Modeling/")
 source("http://www.r-statistics.com/wp-content/uploads/2010/02/Barnard.R.txt")
 source("http://www.r-statistics.com/wp-content/uploads/2012/01/source_https.r.txt")
 source_https("https://raw.github.com/talgalili/R-code-snippets/master/Barnard.R")
-MCLdata=read.csv("Mcl1_Xiao_Data.txt",header = T,sep='\t')[1:23,1:5]
+MCLdata=read.csv("BH3_Profiling/Mcl1_Xiao_Data.txt",header = T,sep='\t')[1:23,1:5]
 
 View(MCLdata)
-colnames(MCLdata)
+rownames(MCLdata)
 
 MCLdata[1:13,4]
 
 
-boxplot(MCLdata[1:14,4],MCLdata[15:23,4], ylab="% Viability upon treatment (MCL-1 siRNA)",names = c("AKT Phenotype \n n=14", " EGFR Phenotype \n n=9"), col = c("red", "grey"), main="Mcl-1 Dependence Across Growth Phenotypes", ylim=c(0,100))
-text(1,2,"p-value = 0.095")
+boxplot(MCLdata[1:12,4],MCLdata[13:23,4], ylab="% Viability upon treatment (MCL-1 siRNA)",names = c("AKT Phenotype \n n=14", " EGFR Phenotype \n n=9"), col = c("red", "grey"), main="Mcl-1 Dependence Across Growth Phenotypes", ylim=c(0,100))
+text(1,2,"p-value = 0.43")
 t.test(MCLdata[1:14,4],MCLdata[15:23,4])
 
 
-MclDependence<- matrix(c(9,2,5,7), nrow=2, dimnames=list(c("EGFR", "AKT"), c("Mcl Dependent", "Non-Mcl Dependent")))
-fisher.test(MclDependence)
-fisher.test(MclDependence, alternative = "greater")
+
+MclDependence_before<- matrix(c(9,2,5,7), nrow=2, dimnames=list(c("EGFR", "AKT"), c("Mcl Dependent", "Non-Mcl Dependent")))
+MclDependence_after<- matrix(c(4,7,6,5), nrow=2, dimnames=list(c("EGFR", "AKT"), c("Mcl Dependent", "Non-Mcl Dependent")))
+MclDependence_ccle<- matrix(c(4,6,11,8), nrow=2, dimnames=list(c("EGFR", "AKT"), c("Mcl Dependent", "Non-Mcl Dependent")))
+
+View(Mcl)
+fisher.test(MclDependence_after)
+fisher.test(MclDependence_ccle)
+
+fisher.test(MclDependence_after, alternative = "greater")
 View(MclDependence)
-Barnard(MclDependence)
+Barnard(MclDependence_after)
+Barnard(MclDependence_ccle)
 
 
 TeaTasting <-
