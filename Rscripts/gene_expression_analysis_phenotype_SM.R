@@ -1,10 +1,13 @@
+
+
+
 icbp<-as.matrix(read.table("~/Dropbox/bild_signatures/Datasets/icbp_Rsubread_tpmlog.txt", sep='\t', stringsAsFactors=FALSE, header=1, row.names=1))
 exp<-t(icbp[c("BAX","BAK1","BID","BCL2L11","BAD","BIK","PMAIP1","HRK","BBC3","BMF","BCL2","BCL2L1","BCL2L2","MCL1","BCL2A1"),])
 rownames(exp)[1:7]<-c("184A1","184B5","21MT1","21MT2","21NT","21PT","600MPE")
 heatmap(exp)
 source('~/Dropbox/bild_signatures/bild_signatures/Rmarkdowns_scripts//Key_ASSIGN_functions.Rmd', echo=TRUE)
-single_pathway_best_icbp<-gatherFile("~/Desktop/20160201_ICBP_single_anchorGenes/")[,c(
-  "akt_20_gene_list/adap_adap_single/pathway_activity_testset.csv/akt"
+single_pathway_best_icbp<-gatherFile("~/Documents/PhDProjects/Multipathway_Modeling/Results/ASSIGN/20160201_ICBP_single_anchorGenes/")[,c(
+"akt_20_gene_list/adap_adap_single/pathway_activity_testset.csv/akt"
   ,"bad_250_gene_list/adap_adap_single/pathway_activity_testset.csv/bad"
   ,"egfr_25_gene_list/adap_adap_single/pathway_activity_testset.csv/egfr"
   ,"her2_10_gene_list/adap_adap_single/pathway_activity_testset.csv/her2"
@@ -13,6 +16,7 @@ single_pathway_best_icbp<-gatherFile("~/Desktop/20160201_ICBP_single_anchorGenes
   ,"krasqh_300_gene_list/adap_adap_single/pathway_activity_testset.csv/krasqh"
   ,"raf_350_gene_list/adap_adap_single/pathway_activity_testset.csv/raf"
 )]
+
 colnames(single_pathway_best_icbp) <-
   toupper(gsub(pattern = "_.*",replacement = "",colnames(single_pathway_best_icbp)))
 colnames(single_pathway_best_icbp)
@@ -22,7 +26,7 @@ single_pathway_best_icbp$phenotype<-NA
 single_pathway_best_icbp[,1:8]<- scale(single_pathway_best_icbp[,1:8],scale = T,center = T)
 
 akt<-apply(single_pathway_best_icbp[,c(1,4,5)],1,mean)
-egfr<-apply(single_pathway_best[,c(2,3,6:8)],1,mean)
+egfr<-apply(single_pathway_best_icbp[,c(2,3,6:8)],1,mean)
 for(i in 1:nrow(single_pathway_best_icbp))
 { print(i)
   if(akt[[i]] > egfr[[i]]){
@@ -33,7 +37,41 @@ for(i in 1:nrow(single_pathway_best_icbp))
   }
 }
 
-write.table(cbind(akt,egfr,single_pathway_best_icbp),"~/Dropbox/akt_egfr_phenotype_0220.txt",sep='\t',quote=F, col.names = NA)
+
+#write.table(cbind(akt,egfr,single_pathway_best_icbp),"~/Dropbox/akt_egfr_phenotype_0220.txt",sep='\t',quote=F, col.names = NA)
+
+#now remove KRASqh from the ICBP data set and recall the phenotypes
+colnames(single_pathway_best_icbp)
+single_pathway_best_icbp_nokras=single_pathway_best_icbp[,-7]
+View(single_pathway_best_icbp_nokras)
+
+
+akt_nokras<-apply(single_pathway_best_icbp_nokras[,c(1,4,5)],1,mean)
+View(akt_nokras)
+colnames(single_pathway_best_icbp_nokras)
+egfr_nokras<-apply(single_pathway_best_icbp_nokras[,c(2,3,6:7)],1,mean)
+View(egfr_nokras)
+
+for(i in 1:nrow(single_pathway_best_icbp_nokras))
+{ print(i)
+  if(akt_nokras[[i]] > egfr_nokras[[i]]){
+    single_pathway_best_icbp_nokras[i,8] <-"AKT Phenotype"
+  }
+  else{
+    single_pathway_best_icbp_nokras[i,8] <- "EGFR Phenotype"
+  }
+}
+
+View(single_pathway_best_icbp_nokras)
+colnames(single_pathway_best_icbp_nokras)[8]="wo KrasQH"
+colnames(single_pathway_best_icbp)[9]="w KrasQH"
+combine_icbp=merge_drop(single_pathway_best_icbp,single_pathway_best_icbp_nokras)
+combine_icbp=combine_icbp[,c(9,17)]
+colnames(combine_icbp)
+
+write.table(combine_icbp,"~/Documents/PhDProjects/Multipathway_Modeling/Results/ICBP_phenotypes_woKRAS.txt",sep='\t',quote=F, col.names = NA)
+
+
 exp_best<-merge_drop(single_pathway_best_icbp,exp)
 colnames(exp_best)
 pdf("~/Dropbox/bild_signatures/Validations/ICBP/phenotype_gene_expression_0221.pdf")
@@ -69,12 +107,9 @@ colnames(assay_ec50_preds)
 #heatmap.2(as.matrix(cor(assay_ec50_preds[,1:14],assay_ec50_preds[,15:22],use="pairwise")),margins =c(10,10), col=bluered, trace="none",main="",scale="row")#,cellnote = round(cors,digits = 2),notecol = 'black',density.info = 'none')
 heatmap.2(as.matrix(cor(assay_ec50_preds[,1:11],assay_ec50_preds[,12:19],use="pairwise")),margins =c(10,10), col=bluered, trace="none",main="",scale="row")#,cellnote = round(cors,digits = 2),notecol = 'black',density.info = 'none')
 
-
-
 library(mclust)
 library(reshape2)
 library(ggplot2)
-
 
 par(mfrow=c(1,1),lwd=4)
 pdf("~/Dropbox/drug_assay_phenotype_boxplots.pdf")
@@ -102,9 +137,12 @@ par(lwd=4)
 
 dev.off()
 
+getwd()
 
+
+"~/Desktop/"
 ########TCGA Analysis#######
-single_pathway_best_tcga<- gatherFile("~/Documents/Multipathway_Modeling/20160201_TCGA_single_anchorGenes/")[,c(
+single_pathway_best_tcga<- gatherFile("~/Documents/PhDProjects/Multipathway_Modeling/Results/ASSIGN/20160201_TCGA_single_anchorGenes/")[,c(
   "akt_20_gene_list/adap_adap_single/pathway_activity_testset.csv/akt"
   ,"bad_250_gene_list/adap_adap_single/pathway_activity_testset.csv/bad"
   ,"egfr_25_gene_list/adap_adap_single/pathway_activity_testset.csv/egfr"
@@ -118,19 +156,17 @@ single_pathway_best_tcga<- gatherFile("~/Documents/Multipathway_Modeling/2016020
 
 View(single_pathway_best_tcga)
 row.names(single_pathway_best_tcga)
-
-
 colnames(single_pathway_best_tcga) <-
   toupper(gsub(pattern = "_.*",replacement = "",colnames(single_pathway_best_tcga)))
 colnames(single_pathway_best_tcga)
-
-
 single_pathway_best_tcga$phenotype<-NA
+View(single_pathway_best_tcga)
 single_pathway_best_tcga[,1:8]<- scale(single_pathway_best_tcga[,1:8],scale = T,center = T)
-
 akt<-apply(single_pathway_best_tcga[,c(1,4,5)],1,mean)
 egfr<-apply(single_pathway_best_tcga[,c(2,3,6:8)],1,mean)
-View(akt)
+View(single_pathway_best_tcga)
+
+
 for(i in 1:nrow(single_pathway_best_tcga))
 { print(i)
   if(akt[[i]] > egfr[[i]]){
@@ -141,11 +177,45 @@ for(i in 1:nrow(single_pathway_best_tcga))
   }
 }
 
+single_pathway_best_tcga_nokras=single_pathway_best_tcga[,-7]
+View(single_pathway_best_tcga_nokras)
+akt_nokras<-apply(single_pathway_best_tcga_nokras[,c(1,4,5)],1,mean)
+colnames(single_pathway_best_tcga_nokras)
 
-write.table(single_pathway_best_tcga,"~/Dropbox/TCGA_akt_egfr_phenotype.txt",sep='\t',quote=F, col.names = NA)
-
-dim(single_pathway_best_tcga)x
+egfr_nokras<-apply(single_pathway_best_tcga_nokras[,c(2,3,6,7)],1,mean)
 View(single_pathway_best_tcga)
+summary(egfr_nokras)
+summary(egfr)
+
+for(i in 1:nrow(single_pathway_best_tcga_nokras))
+{ print(i)
+  if(akt_nokras[[i]] > egfr_nokras[[i]]){
+    single_pathway_best_tcga_nokras[i,9] <-"AKT Phenotype"
+  }
+  else{
+    single_pathway_best_tcga_nokras[i,9] <- "EGFR Phenotype"
+  }
+}
+View(single_pathway_best_tcga_nokras)
+View(single_pathway_best_tcga)
+colnames(single_pathway_best_tcga_nokras)
+single_pathway_best_tcga_nokras=single_pathway_best_tcga_nokras[,-8]
+colnames(single_pathway_best_tcga_nokras)[8]="w/o KrasGH"
+colnames(single_pathway_best_tcga)
+colnames(single_pathway_best_tcga)[9]="w KrasGH"
+colnames(compare)
+compare=merge_drop(single_pathway_best_tcga, single_pathway_best_tcga_nokras)
+compare=compare[,c(9,17)]
+View(compare)
+
+write.table(compare,"~/Documents/PhDProjects/Multipathway_Modeling/Results/TCGA_phenotypes_woKRASqh.txt",sep='\t',quote=F, col.names = NA)
+
+
+
+#write.table(single_pathway_best_tcga,"~/Dropbox/TCGA_akt_egfr_phenotype.txt",sep='\t',quote=F, col.names = NA)
+
+
+
 sortTCGA= single_pathway_best_tcga[order(single_pathway_best_tcga$phenotype),]
 View(sortTCGA)
 write.table
